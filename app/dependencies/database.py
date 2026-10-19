@@ -1,23 +1,33 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlmodel import Session, SQLModel, create_engine
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 import app.models.room as room
 
 sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+sqlite_url = f"sqlite+aiosqlite:///{sqlite_file_name}"
 
-engine = create_engine(sqlite_url, connect_args={"check_same_thread": False}, echo=True)
+# database Need to configure asyn using lib
+# eg for postgress --postgresql+asyncpg
+
+engine = create_async_engine(sqlite_url, echo=True)
 
 
-def create_db_tables():
-    SQLModel.metadata.create_all(engine)
+async def create_db_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+    # SQLModel.metadata.create_all(engine)
 
 
-def get_session():
-    with Session(engine) as session:
+async def get_session():
+    async with AsyncSession(engine) as session:
         yield session
+
+    # with Session(engine) as session:
+    #     yield session
 
 
 # Request to hit route handler
@@ -27,4 +37,4 @@ def get_session():
 # route handler will finish up
 # the context manager (with) will clean up the session
 
-SessionDep = Annotated[Session, Depends(get_session)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
