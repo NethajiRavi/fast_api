@@ -41,7 +41,7 @@ class RoomQueryParams(BaseModel):
     status_code=status.HTTP_200_OK,
     response_model=list[RoomPublic],
 )
-def get_rooms(session: SessionDep, params: Annotated[RoomQueryParams, Query()]):
+async def get_rooms(session: SessionDep, params: Annotated[RoomQueryParams, Query()]):
 
     statement = select(Room)
 
@@ -51,7 +51,8 @@ def get_rooms(session: SessionDep, params: Annotated[RoomQueryParams, Query()]):
     if params.search:
         statement = statement.where(col(Room.name).ilike(f"%{params.search}%"))
 
-    return session.exec(statement).all()
+    rooms = await session.exec(statement)
+    return rooms.all()
 
     # select(Room).where(Room.name == "sunny 2_bedroom appartment")
     # result = session.exec(select(Room)).all()
@@ -96,11 +97,11 @@ def check_maintainenace_mode():
     status_code=status.HTTP_200_OK,
     response_model=RoomPublic,
 )
-def getRoomById(
+async def getRoomById(
     session: SessionDep,
     room_id: getRoomId,
 ) -> Room:
-    room = session.get(Room, room_id)
+    room = await session.get(Room, room_id)
     # with Session(engine) as session:
     #     # python code to interact db
 
@@ -122,7 +123,7 @@ def getRoomById(
     response_model=RoomPublic,
     dependencies=[Depends(check_maintainenace_mode)],
 )
-def create_room(
+async def create_room(
     session: SessionDep,
     room: RoomBase,
 ):
@@ -130,8 +131,8 @@ def create_room(
     validated_room = Room.model_validate(room)
     print("Validated_Room", validated_room)
     session.add(validated_room)
-    session.commit()
-    session.refresh(validated_room)
+    await session.commit()
+    await session.refresh(validated_room)
     return validated_room
 
 
@@ -141,7 +142,9 @@ def create_room(
     response_model=RoomPublic,
     dependencies=[Depends(check_maintainenace_mode)],
 )
-def update_room(session: SessionDep, room_id: getRoomId, room_payload: RoomUpdate):
+async def update_room(
+    session: SessionDep, room_id: getRoomId, room_payload: RoomUpdate
+):
 
     room = session.get(Room, room_id)
     if not room:
@@ -151,8 +154,8 @@ def update_room(session: SessionDep, room_id: getRoomId, room_payload: RoomUpdat
     room_payload_without_default_value = room_payload.model_dump(exclude_unset=True)
     room.sqlmodel_update(room_payload_without_default_value)
     session.add(room)
-    session.commit()
-    session.refresh(room)
+    await session.commit()
+    await session.refresh(room)
     return room
 
 
@@ -161,13 +164,13 @@ def update_room(session: SessionDep, room_id: getRoomId, room_payload: RoomUpdat
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(check_maintainenace_mode)],
 )
-def delete_room(session: SessionDep, room_id: getRoomId) -> Room:
+async def delete_room(session: SessionDep, room_id: getRoomId) -> Room:
     room = session.get(Room, room_id)
     if not room:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Room Not Found"
         )
 
-    session.delete(room)
-    session.commit()
+    await session.delete(room)
+    await session.commit()
     return room

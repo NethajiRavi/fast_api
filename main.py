@@ -14,7 +14,7 @@ def log_request(request: Request):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     #  Additional operation before the sever startup
-    create_db_tables()
+    await create_db_tables()
     yield
     #  Additional operation after the sever startup
 
