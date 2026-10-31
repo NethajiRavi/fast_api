@@ -4,7 +4,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from app.dependencies.database import create_db_tables
-from app.routers import generals, rooms
+from app.routers import booking, generals, rooms, users
 
 
 def log_request(request: Request):
@@ -23,6 +23,8 @@ app = FastAPI(lifespan=lifespan, dependencies=[Depends(log_request)])
 app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 app.include_router(generals.router)
 app.include_router(rooms.router)
+app.include_router(booking.router)
+app.include_router(users.router)
 
 # Annotated Comes from 'typing'
 # Annotated Type attached from a existing type
