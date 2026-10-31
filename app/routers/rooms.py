@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, StringConstraints, field_validator
 from sqlmodel import col, select
 
 from app.dependencies.database import SessionDep
+from app.dependencies.room import getRoomId
 from app.models.room import Room, RoomBase, RoomPublic, RoomUpdate
 
 router = APIRouter(
@@ -79,7 +80,7 @@ def get_room_faq():
     return {"check_in": "From 3pm", "check_out": "Untill 11Am"}
 
 
-getRoomId = Annotated[int, Path(ge=1, description="The id of the room to be")]
+# getRoomId = Annotated[int, Path(ge=1, description="The id of the room to be")]
 
 MAINTENANCE_MODE = False
 
